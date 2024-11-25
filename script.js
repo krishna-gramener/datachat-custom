@@ -23,6 +23,7 @@ const loading = html`<div class="spinner-border" role="status">
   <span class="visually-hidden">Loading...</span>
 </div>`;
 
+let latestQueryResult = [];
 // --------------------------------------------------------------------
 // Set up Markdown
 const marked = new Marked(
@@ -32,7 +33,7 @@ const marked = new Marked(
       const language = hljs.getLanguage(lang) ? lang : "plaintext";
       return hljs.highlight(code, { language }).value;
     },
-  }),
+  })
 );
 
 marked.use({
@@ -63,7 +64,7 @@ render(
         </div>
       `
     : html`<a class="btn btn-primary" href="https://llmfoundry.straive.com/">Sign in to upload files</a>`,
-  $upload,
+  $upload
 );
 
 // --------------------------------------------------------------------
@@ -82,10 +83,10 @@ fetch("config.json")
                 <p class="card-text">${body}</p>
               </div>
             </a>
-          </div>`,
+          </div>`
       ),
-      $demos,
-    ),
+      $demos
+    )
   );
 
 $demos.addEventListener("click", async (e) => {
@@ -200,7 +201,7 @@ const DB = {
         else if (typeof sampleValue === "boolean") sqlType = "INTEGER"; // SQLite has no boolean
         else if (sampleValue instanceof Date) sqlType = "TEXT"; // Store dates as TEXT
         return [col, sqlType];
-      }),
+      })
     );
     const createTableSQL = `CREATE TABLE IF NOT EXISTS ${tableName} (${cols.map((col) => `[${col}] ${typeMap[col]}`).join(", ")})`;
     db.exec(createTableSQL);
@@ -215,7 +216,7 @@ const DB = {
           cols.map((col) => {
             const value = row[col];
             return value instanceof Date ? value.toISOString() : value;
-          }),
+          })
         )
         .stepReset();
     }
@@ -279,7 +280,7 @@ async function drawTables() {
                           <td>${column.dflt_value ?? "NULL"}</td>
                           <td>${column.pk ? "Yes" : "No"}</td>
                         </tr>
-                      `,
+                      `
                     )}
                   </tbody>
                 </table>
@@ -287,7 +288,7 @@ async function drawTables() {
             </div>
           </div>
         </div>
-      `,
+      `
       )}
     </div>
   `;
@@ -321,7 +322,7 @@ async function drawTables() {
         </div>`,
         query,
       ],
-      $tablesContainer,
+      $tablesContainer
     );
     $query.focus();
   });
@@ -357,8 +358,7 @@ ${DB.schema()
 3. Write SQL to answer the question. Use SQLite sytax.
 
 Replace generic filter values (e.g. "a location", "specific region", etc.) by querying a random value from data.
-Wrap columns with spaces inside [].
-Limit answers to 100 rows unless asked not to.`,
+Wrap columns with spaces inside [].`,
     user: query,
   });
   render(html`${unsafeHTML(marked.parse(result))}`, $sql);
@@ -369,8 +369,15 @@ Limit answers to 100 rows unless asked not to.`,
 
   // Render the data using the utility function
   if (data.length > 0) {
-    const tableHtml = renderTable(data);
-    render(tableHtml, $result);
+    latestQueryResult = data;
+    const downloadButton = html`
+      <button id="download-button" type="button" class="btn btn-primary">
+        <i class="bi bi-filetype-csv"></i>
+        Download CSV
+      </button>
+    `;
+    const tableHtml = renderTable(data.slice(0, 100));
+    render([downloadButton, tableHtml], $result);
   } else {
     render(html`<p>No results found.</p>`, $result);
   }
@@ -427,9 +434,28 @@ function renderTable(data) {
             <tr>
               ${columns.map((col) => html`<td>${row[col]}</td>`)}
             </tr>
-          `,
+          `
         )}
       </tbody>
     </table>
   `;
+}
+
+$result.addEventListener("click", (e) => {
+  const $downloadButton = e.target.closest("#download-button");
+  if ($downloadButton && latestQueryResult.length > 0) {
+    download(dsvFormat(",").format(latestQueryResult), "datachat.csv", "text/csv");
+  }
+});
+
+// --------------------------------------------------------------------
+// Function to download CSV file
+function download(content, filename, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
 }
