@@ -6,10 +6,14 @@ import { dsvFormat, autoType } from "https://cdn.jsdelivr.net/npm/d3-dsv@3/+esm"
 import { Marked } from "https://cdn.jsdelivr.net/npm/marked@13/+esm";
 import { markedHighlight } from "https://cdn.jsdelivr.net/npm/marked-highlight@2/+esm";
 import hljs from "https://cdn.jsdelivr.net/npm/highlight.js@11/+esm";
+import { Chart, registerables } from "https://cdn.jsdelivr.net/npm/chart.js@4/+esm";
 
 // Initialize SQLite
 const defaultDB = "@";
 const sqlite3 = await sqlite3InitModule({ printErr: console.error });
+
+// Initialize ChartJS
+Chart.register(...registerables);
 
 // Set up DOM elements
 const $demos = document.querySelector("#demos");
@@ -18,12 +22,15 @@ const $tablesContainer = document.getElementById("tables-container");
 const $sql = document.getElementById("sql");
 const $toast = document.getElementById("toast");
 const $result = document.getElementById("result");
+const $chartCode = document.getElementById("chart-code");
 const toast = new bootstrap.Toast($toast);
 const loading = html`<div class="spinner-border" role="status">
   <span class="visually-hidden">Loading...</span>
 </div>`;
 
 let latestQueryResult = [];
+let latestChart;
+
 // --------------------------------------------------------------------
 // Set up Markdown
 const marked = new Marked(
@@ -370,14 +377,34 @@ Wrap columns with spaces inside [].`,
   // Render the data using the utility function
   if (data.length > 0) {
     latestQueryResult = data;
-    const downloadButton = html`
-      <button id="download-button" type="button" class="btn btn-primary">
-        <i class="bi bi-filetype-csv"></i>
-        Download CSV
-      </button>
+    const actions = html`
+      <div class="row align-items-center g-2">
+        <div class="col-auto">
+          <button id="download-button" type="button" class="btn btn-primary">
+            <i class="bi bi-filetype-csv"></i>
+            Download CSV
+          </button>
+        </div>
+        <div class="col">
+          <input
+            type="text"
+            id="chart-input"
+            name="chart-input"
+            class="form-control"
+            placeholder="Describe what you want to chart"
+            value="Draw the most appropriate chart to visualize this data"
+          />
+        </div>
+        <div class="col-auto">
+          <button id="chart-button" type="button" class="btn btn-primary">
+            <i class="bi bi-bar-chart-line"></i>
+            Draw Chart
+          </button>
+        </div>
+      </div>
     `;
     const tableHtml = renderTable(data.slice(0, 100));
-    render([downloadButton, tableHtml], $result);
+    render([actions, tableHtml], $result);
   } else {
     render(html`<p>No results found.</p>`, $result);
   }
@@ -441,10 +468,55 @@ function renderTable(data) {
   `;
 }
 
-$result.addEventListener("click", (e) => {
+$result.addEventListener("click", async (e) => {
   const $downloadButton = e.target.closest("#download-button");
   if ($downloadButton && latestQueryResult.length > 0) {
     download(dsvFormat(",").format(latestQueryResult), "datachat.csv", "text/csv");
+  }
+  const $chartButton = e.target.closest("#chart-button");
+  if ($chartButton && latestQueryResult.length > 0) {
+    const system = `Write JS code to draw a ChartJS chart.
+Write the code inside a \`\`\`js code fence.
+\`Chart\` is already imported.
+Data is ALREADY available as \`data\`, an array of objects. Do not create it. Just use it.
+Render inside a <canvas id="chart"> like this:
+
+\`\`\`js
+return new Chart(
+  document.getElementById("chart"),
+  {
+    type: "...",
+    options: { ... },
+    data: { ... },
+  }
+)
+\`\`\`
+`;
+    const user = `
+Question: ${$tablesContainer.querySelector('[name="query"]').value}
+
+// First 3 rows of result
+data = ${JSON.stringify(latestQueryResult.slice(0, 3))}
+
+$result.querySelector("#chart-input").value
+`;
+    render(loading, $chartCode);
+    const result = await llm({ system, user });
+    render(html`${unsafeHTML(marked.parse(result))}`, $chartCode);
+    const code = result.match(/```js\n(.*?)\n```/s)?.[1];
+    if (!code) {
+      notify("danger", "Error", "Could not generate chart code");
+      return;
+    }
+
+    try {
+      const drawChart = new Function("Chart", "data", code);
+      if (latestChart) latestChart.destroy();
+      latestChart = drawChart(Chart, latestQueryResult);
+    } catch (error) {
+      notify("danger", "Error", `Failed to draw chart: ${error.message}`);
+      console.error(error);
+    }
   }
 });
 
