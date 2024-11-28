@@ -498,7 +498,7 @@ Question: ${$tablesContainer.querySelector('[name="query"]').value}
 // First 3 rows of result
 data = ${JSON.stringify(latestQueryResult.slice(0, 3))}
 
-$result.querySelector("#chart-input").value
+IMPORTANT: ${$result.querySelector("#chart-input").value}
 `;
     render(loading, $chartCode);
     const result = await llm({ system, user });
