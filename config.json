@@ -1,6 +1,54 @@
 {
   "demos": [
     {
+      "title": "World",
+      "body": "A database of 239 states and their cities.",
+      "file": "https://raw.githubusercontent.com/gramener/datasets/main/world.db",
+      "questions": [
+        "What is the total population of all cities in a specific country?",
+        "Which countries have a life expectancy greater than a certain number?",
+        "What are the official languages spoken in a specific country and their percentages?",
+        "Which cities have a population greater than a certain threshold and belong to a specific district?",
+        "What is the average surface area of countries in a specific continent?"
+      ]
+    },
+    {
+      "title": "NBA",
+      "body": "A database with information about basketball matches from the National Basketball Association. Lists Players, Teams, and matches with action counts for each player.",
+      "file": "https://raw.githubusercontent.com/gramener/datasets/main/nba.db",
+      "questions": [
+        "What is the average points scored by each player in the dataset?",
+        "Which team has the highest total rebounds in a specific game?",
+        "How many assists did each player make in games where they played more than 30 minutes?",
+        "What is the shooting percentage (field goals made/field goal attempts) for each player in the dataset?",
+        "Which player has the highest plus-minus rating in a specific game?"
+      ]
+    },
+    {
+      "title": "CraftBeer",
+      "body": "Craft beers labeled by styles and composition. A separate dataset lists breweries by state.",
+      "file": "https://raw.githubusercontent.com/gramener/datasets/main/craftbeer.db",
+      "questions": [
+        "What is the average ABV (Alcohol by Volume) of beers produced by each brewery?",
+        "Which brewery has the highest IBU (International Bitterness Units) beer, and what is the name of that beer?",
+        "List all beers that have an ABV greater than 8% and their corresponding breweries.",
+        "How many different beer styles are produced by breweries in a specific state (e.g., California)?",
+        "What are the top 5 breweries by the number of beers they produce, along with the count of their beers?"
+      ]
+    },
+    {
+      "title": "Atherosclerosis",
+      "body": "Atherosclerosis is a longitudinal 20 years lasting primary preventive study of middle-aged men.",
+      "file": "https://raw.githubusercontent.com/gramener/datasets/main/atherosclerosis.db",
+      "questions": [
+        "What is the average weight (VAHA) of individuals with diabetes (DIABET)?",
+        "How many individuals have a history of hypertension (HYPERT) and also smoke (KOURENI)?",
+        "What are the most common causes of death (PRICUMR) recorded in the Death table?",
+        "What is the trend of cholesterol levels (CHLST) over the years for individuals with a specific condition (NEMOC1) in the Letter table?",
+        "How does the average systolic blood pressure (SYST) compare between individuals with and without a history of heart disease (SRDCE)?"
+      ]
+    },
+    {
       "title": "Card Transactions",
       "body": "Card transactions data with details on issuer country, transaction amount, and other details.",
       "file": "https://raw.githubusercontent.com/gramener/datasets/main/card_transactions.csv",
