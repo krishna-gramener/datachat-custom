@@ -79,12 +79,18 @@ render(
 
 fetch("config.json")
   .then((r) => r.json())
-  .then(({ demos }) =>
+  .then(({ demos }) => {
+    $demos.innerHTML = "";
     render(
       demos.map(
-        ({ title, body, file, questions }) =>
+        ({ title, body, file, context, questions }) =>
           html` <div class="col py-3">
-            <a class="demo card h-100 text-decoration-none" href="${file}" data-questions=${JSON.stringify(questions ?? [])}>
+            <a
+              class="demo card h-100 text-decoration-none"
+              href="${file}"
+              data-questions=${JSON.stringify(questions ?? [])}
+              data-context=${JSON.stringify(context ?? "")}
+            >
               <div class="card-body">
                 <h5 class="card-title">${title}</h5>
                 <p class="card-text">${body}</p>
@@ -93,8 +99,8 @@ fetch("config.json")
           </div>`
       ),
       $demos
-    )
-  );
+    );
+  });
 
 $demos.addEventListener("click", async (e) => {
   const $demo = e.target.closest(".demo");
@@ -108,6 +114,7 @@ $demos.addEventListener("click", async (e) => {
       DB.questionInfo.schema = JSON.stringify(DB.schema());
       DB.questionInfo.questions = questions;
     }
+    DB.context = JSON.parse($demo.dataset.context);
     drawTables();
   }
 });
@@ -164,6 +171,7 @@ const DB = {
         const uploadDB = new sqlite3.oo1.DB(file.name, "r");
         const tables = uploadDB.exec("SELECT name, sql FROM sqlite_master WHERE type='table'", { rowMode: "object" });
         for (const { name, sql } of tables) {
+          db.exec(`DROP TABLE IF EXISTS "${name}"`);
           db.exec(sql);
           const data = uploadDB.exec(`SELECT * FROM "${name}"`, { rowMode: "object" });
           if (data.length > 0) {
@@ -300,8 +308,12 @@ async function drawTables() {
     </div>
   `;
 
-  const query = html`
+  const query = () => html`
     <form class="mt-4 narrative mx-auto">
+      <div class="mb-3">
+        <label for="context" class="form-label fw-bold">Provide context about your dataset:</label>
+        <textarea class="form-control" name="context" id="context" rows="3">${DB.context}</textarea>
+      </div>
       <div class="mb-3">
         <label for="query" class="form-label fw-bold">Ask a question about your data:</label>
         <textarea class="form-control" name="query" id="query" rows="3"></textarea>
@@ -310,7 +322,7 @@ async function drawTables() {
     </form>
   `;
 
-  render([tables, ...(schema.length ? [html`<div class="text-center my-3">${loading}</div>`, query] : [])], $tablesContainer);
+  render([tables, ...(schema.length ? [html`<div class="text-center my-3">${loading}</div>`, query()] : [])], $tablesContainer);
   if (!schema.length) return;
 
   const $query = $tablesContainer.querySelector("#query");
@@ -327,7 +339,7 @@ async function drawTables() {
             ${questions.map((q) => html`<li><a href="#" class="question">${q}</a></li>`)}
           </ul>
         </div>`,
-        query,
+        query(),
       ],
       $tablesContainer
     );
@@ -354,59 +366,71 @@ $tablesContainer.addEventListener("submit", async (e) => {
   render(html`<div class="text-center my-3">${loading}</div>`, $sql);
   render(html``, $result);
   const result = await llm({
-    system: `You'll answer the user's question based on this SQLite schema:
+    system: `You are an expert SQLite query writer. The user has a SQLite dataset.
+
+${DB.context}
+
+This is their SQLite schema:
 
 ${DB.schema()
   .map(({ sql }) => sql)
   .join("\n\n")}
 
-1. Guess my objective in asking this.
+Answer the user's question following these steps:
+
+1. Guess their objective in asking this.
 2. Describe the steps to achieve this objective in SQL.
 3. Write SQL to answer the question. Use SQLite sytax.
 
 Replace generic filter values (e.g. "a location", "specific region", etc.) by querying a random value from data.
-Wrap columns with spaces inside [].`,
+Always use [Table].[Column].
+`,
     user: query,
   });
   render(html`${unsafeHTML(marked.parse(result))}`, $sql);
 
   // Extract everything inside {lang?}...```
   const sql = result.match(/```.*?\n(.*?)```/s)?.[1] ?? result;
-  const data = db.exec(sql, { rowMode: "object" });
+  try {
+    const data = db.exec(sql, { rowMode: "object" });
 
-  // Render the data using the utility function
-  if (data.length > 0) {
-    latestQueryResult = data;
-    const actions = html`
-      <div class="row align-items-center g-2">
-        <div class="col-auto">
-          <button id="download-button" type="button" class="btn btn-primary">
-            <i class="bi bi-filetype-csv"></i>
-            Download CSV
-          </button>
+    // Render the data using the utility function
+    if (data.length > 0) {
+      latestQueryResult = data;
+      const actions = html`
+        <div class="row align-items-center g-2">
+          <div class="col-auto">
+            <button id="download-button" type="button" class="btn btn-primary">
+              <i class="bi bi-filetype-csv"></i>
+              Download CSV
+            </button>
+          </div>
+          <div class="col">
+            <input
+              type="text"
+              id="chart-input"
+              name="chart-input"
+              class="form-control"
+              placeholder="Describe what you want to chart"
+              value="Draw the most appropriate chart to visualize this data"
+            />
+          </div>
+          <div class="col-auto">
+            <button id="chart-button" type="button" class="btn btn-primary">
+              <i class="bi bi-bar-chart-line"></i>
+              Draw Chart
+            </button>
+          </div>
         </div>
-        <div class="col">
-          <input
-            type="text"
-            id="chart-input"
-            name="chart-input"
-            class="form-control"
-            placeholder="Describe what you want to chart"
-            value="Draw the most appropriate chart to visualize this data"
-          />
-        </div>
-        <div class="col-auto">
-          <button id="chart-button" type="button" class="btn btn-primary">
-            <i class="bi bi-bar-chart-line"></i>
-            Draw Chart
-          </button>
-        </div>
-      </div>
-    `;
-    const tableHtml = renderTable(data.slice(0, 100));
-    render([actions, tableHtml], $result);
-  } else {
-    render(html`<p>No results found.</p>`, $result);
+      `;
+      const tableHtml = renderTable(data.slice(0, 100));
+      render([actions, tableHtml], $result);
+    } else {
+      render(html`<p>No results found.</p>`, $result);
+    }
+  } catch (e) {
+    render(html`<div class="alert alert-danger">${e.message}</div>`, $result);
+    console.error(e);
   }
 });
 

@@ -40,12 +40,13 @@
       "title": "Atherosclerosis",
       "body": "Atherosclerosis is a longitudinal 20 years lasting primary preventive study of middle-aged men.",
       "file": "https://raw.githubusercontent.com/gramener/datasets/main/atherosclerosis.db",
+      "context": "The dataset contains data on individuals who participated in the Atherosclerosis study. It includes information on their demographics, medical history, and various health-related measurements over a 20-year period.",
       "questions": [
         "What is the average weight (VAHA) of individuals with diabetes (DIABET)?",
         "How many individuals have a history of hypertension (HYPERT) and also smoke (KOURENI)?",
         "What are the most common causes of death (PRICUMR) recorded in the Death table?",
         "What is the trend of cholesterol levels (CHLST) over the years for individuals with a specific condition (NEMOC1) in the Letter table?",
-        "How does the average systolic blood pressure (SYST) compare between individuals with and without a history of heart disease (SRDCE)?"
+        "How does the average systolic blood pressure (SYST1) compare between individuals with and without a history of heart disease (SRDCE)?"
       ]
     },
     {
