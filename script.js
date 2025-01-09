@@ -243,8 +243,9 @@ const DB = {
   },
 };
 
-document.getElementById("context").addEventListener("input", (e) => {
-  DB.context = e.target.value;
+$tablesContainer.addEventListener("input", (e) => {
+  const $context = e.target.closest("#context");
+  if ($context) DB.context = $context.value;
 });
 
 $upload.addEventListener("change", async (e) => {
