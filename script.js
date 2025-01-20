@@ -450,12 +450,12 @@ Answer the user's question following these steps:
 3. Build the logic for the SQL query by identifying the necessary tables and relationships. Select the appropriate columns based on the user's question and the dataset.
 4. Write SQL to answer the question. Use SQLite syntax.
 5. All numerical values should be formatted to 2 decimal places only.
+6. Date is in 'dd/mm/yyyyy' format.'
 Replace generic filter values (e.g. "a location", "specific region", etc.) by querying a random value from data.
 Always use [Table].[Column].
 `,
     user: query,
   });
-  // render(html`${unsafeHTML(marked.parse(result))}`, $sql);
 
   // Extract everything inside {lang?}...```
   generatedSql = result.match(/```.*?\n(.*?)```/s)?.[1] ?? result;
@@ -500,10 +500,10 @@ Always use [Table].[Column].
       tableHtml = renderTable(data.slice(0, 100));
       render(actions, $sql);
     } else {
-      render(html`<p>No results found.</p>`, $result);
+      render(html`<p>No results found.</p>`, $sql);
     }
   } catch (e) {
-    render(html`<div class="alert alert-danger">${e.message}</div>`, $result);
+    render(html`<div class="alert alert-danger">${e.message}</div>`, $sql);
     console.error(e);
   }
 });
@@ -642,7 +642,6 @@ $result.addEventListener("click", async (e) => {
 
   IMPORTANT: ${$result.querySelector("#chart-input").value}
   `;
-    // render(loading, $chartCode);
     const result = await llm({ system, user });
     const code = result.match(/```js\n(.*?)\n```/s)?.[1];
     console.log(result);
