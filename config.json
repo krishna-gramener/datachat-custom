@@ -5,12 +5,11 @@
       "body": "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
       "file": "underwriting.csv",
       "questions": [
-        "List the powers of the top 10 characters by total power",
-        "What is the character with the highest maximum strength?",
-        "Which characters are the smartest?",
-        "How many characters have a minimum durability score greater than 50?",
-        "What is the average maximum speed of all characters listed?",
-        "Which character has the widest range between minimum and maximum energy projection?"
+        "What is daily trend of  approval rate?",
+        "What is the average fico of booked vs declined account at daily level?",
+        "What is the average Inquiries of booked vs declined account at daily level?",
+        "What is the average utilization of booked vs declined account at daily level?",
+        "Distribution of loan requirment based on Purpose of loan"
       ],
       "dict": {
         "Loan ID": ["Unique Loan Id", "no"],

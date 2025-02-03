@@ -64,18 +64,6 @@ try {
   token = null;
 }
 
-render(
-  token
-    ? html`
-        <div class="mb-3">
-          <label for="file" class="form-label">Upload CSV (<code>.csv</code>) or SQLite databases (<code>.sqlite3</code>, <code>.db</code>)</label>
-          <input class="form-control" type="file" id="file" name="file" accept=".csv,.sqlite3,.db,.sqlite,.s3db,.sl3" multiple />
-        </div>
-      `
-    : html`<a class="btn btn-primary" href="https://llmfoundry.straive.com/">Sign in to upload files</a>`,
-  $upload
-);
-
 // --------------------------------------------------------------------
 // Render demos
 
@@ -266,12 +254,6 @@ $tablesContainer.addEventListener("input", (e) => {
   if ($context) DB.context = $context.value;
 });
 
-$upload.addEventListener("change", async (e) => {
-  const uploadPromises = Array.from(e.target.files).map((file) => DB.upload(file));
-  await Promise.all(uploadPromises);
-  drawTables();
-});
-
 // --------------------------------------------------------------------
 // Render tables
 
@@ -449,8 +431,7 @@ Answer the user's question following these steps:
 2. Describe the steps to achieve this objective in SQL.
 3. Build the logic for the SQL query by identifying the necessary tables and relationships. Select the appropriate columns based on the user's question and the dataset.
 4. Write SQL to answer the question. Use SQLite syntax.
-5. All numerical values should be formatted to 2 decimal places only.
-6. Date is in 'dd/mm/yyyyy' format.'
+5. Date is in 'dd/mm/yyyyy' format.'
 Replace generic filter values (e.g. "a location", "specific region", etc.) by querying a random value from data.
 Always use [Table].[Column].
 `,
@@ -557,7 +538,7 @@ function renderTable(data) {
         ${data.map(
           (row) => html`
             <tr>
-              ${columns.map((col) => html`<td>${row[col]}</td>`)}
+              ${columns.map((col) => html`<td>${typeof row[col] === 'number' ? row[col].toFixed(2) : row[col]}</td>`)}
             </tr>
           `
         )}
