@@ -59,7 +59,7 @@ marked.use({
 let token;
 
 try {
-  token = (await fetch("https://llmfoundry.straive.com/token", { credentials: "include" }).then((r) => r.json())).token;
+  token = await fetch("https://llmfoundry.straive.com/token", { credentials: "include" }).then((r) => r.json());
 } catch {
   token = null;
 }

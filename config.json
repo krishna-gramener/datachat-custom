@@ -2,7 +2,7 @@
   "demos": [
     {
       "title": "Underwriting",
-      "body": "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
+      "body": "Loan Underwriting Data with details on Customer Bureau Profile and Loan Information",
       "file": "underwriting.csv",
       "questions": [
         "What is daily trend of  approval rate?",
